@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Admin = require('../models/Admin');
 const Session = require('../models/Session');
 const Analytics = require('../models/Analytics');
@@ -98,6 +99,15 @@ exports.createSession = async (req, res) => {
       message: 'Session created successfully'
     });
   } catch (error) {
+    // Client error: invalid input (validation or cast error)
+    if (error instanceof mongoose.ValidationError || error instanceof mongoose.CastError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid input: ' + error.message,
+        error: error.message
+      });
+    }
+    // Server error: unexpected failure
     res.status(500).json({
       success: false,
       message: 'Error creating session',
@@ -137,6 +147,15 @@ exports.updateSession = async (req, res) => {
       message: 'Session updated successfully'
     });
   } catch (error) {
+    // Client error: invalid input (validation or cast error)
+    if (error instanceof mongoose.ValidationError || error instanceof mongoose.CastError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid input: ' + error.message,
+        error: error.message
+      });
+    }
+    // Server error: unexpected failure
     res.status(500).json({
       success: false,
       message: 'Error updating session',

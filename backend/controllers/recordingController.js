@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Analytics = require('../models/Analytics');
 const AIService = require('../services/aiService');
 const fs = require('fs');
@@ -100,6 +101,15 @@ exports.submitRecording = async (req, res) => {
     }
   } catch (error) {
     console.error('Error submitting recording:', error);
+    // Client error: invalid input (validation or cast error)
+    if (error instanceof mongoose.ValidationError || error instanceof mongoose.CastError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid input: ' + (error instanceof Error ? error.message : String(error)),
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+    // Server error: unexpected failure
     res.status(500).json({
       success: false,
       message: 'Error processing recording',

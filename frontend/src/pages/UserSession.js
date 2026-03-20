@@ -14,6 +14,7 @@ function UserSession() {
   const [feedback, setFeedback] = useState(null);
   const [transcription, setTranscription] = useState(null);
   const [message, setMessage] = useState(null);
+  const [fontSize, setFontSize] = useState(18); // Default font size in pixels
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -147,8 +148,27 @@ function UserSession() {
           )}
 
           <div className="script-section">
-            <h3>📖 Read This Text</h3>
-            <div className="script-text">
+            <div className="script-header">
+              <h3>📖 Read This Text</h3>
+              <div className="font-size-controls">
+                <button 
+                  className="font-btn font-minus"
+                  onClick={() => setFontSize(prev => Math.max(12, prev - 2))}
+                  title="Decrease font size"
+                >
+                  −
+                </button>
+                <span className="font-size-display">{fontSize}px</span>
+                <button 
+                  className="font-btn font-plus"
+                  onClick={() => setFontSize(prev => Math.min(36, prev + 2))}
+                  title="Increase font size"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <div className="script-text" style={{ fontSize: `${fontSize}px` }}>
               {session.scriptText}
             </div>
           </div>

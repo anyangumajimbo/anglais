@@ -139,13 +139,83 @@
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
 }
 
+.script-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
 .script-section h3 {
   font-size: 1.25rem;
   color: #1e3a8a;
-  margin-bottom: 16px;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-grow: 1;
+}
+
+.font-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+}
+
+.font-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 1.25rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.font-btn:hover {
+  background: #1d4ed8;
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
+.font-btn:active {
+  transform: scale(0.98);
+}
+
+.font-minus {
+  background: #ef4444;
+}
+
+.font-minus:hover {
+  background: #dc2626;
+}
+
+.font-plus {
+  background: #16a34a;
+}
+
+.font-plus:hover {
+  background: #15803d;
+}
+
+.font-size-display {
+  font-size: 0.9rem;
+  color: #4b5563;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: center;
 }
 
 .script-text {
@@ -208,8 +278,30 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #2563eb;
   flex-shrink: 0;
+  /* Green checkbox */
+  accent-color: #16a34a;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: white;
+  border: 2px solid #16a34a;
+  border-radius: 4px;
+  position: relative;
+}
+
+.feedback-toggle input:checked,
+.consent-checkbox input:checked {
+  background-color: #16a34a;
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.feedback-toggle input:focus,
+.consent-checkbox input:focus {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
 }
 
 .consent-section {
@@ -468,6 +560,17 @@
     padding: 20px;
   }
 
+  .script-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .font-size-controls {
+    width: 100%;
+    justify-content: center;
+  }
+
   .scores {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
@@ -549,5 +652,22 @@
     font-size: 0.875rem;
     padding: 10px;
     padding-left: 10px;
+  }
+
+  .font-size-controls {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .font-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 4px 8px;
+    font-size: 1.1rem;
+  }
+
+  .font-size-display {
+    font-size: 0.85rem;
+    min-width: 45px;
   }
 }
