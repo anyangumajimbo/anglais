@@ -1,0 +1,214 @@
+.audio-recorder {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 2px solid #dbeafe;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+
+.audio-recorder h3 {
+  font-size: 1.25rem;
+  color: #1e3a8a;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recording-controls,
+.playback-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.start-btn,
+.play-btn,
+.pause-btn,
+.stop-btn,
+.reset-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.start-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+  transform: translateY(-2px);
+}
+
+.stop-btn {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.stop-btn:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+  transform: translateY(-2px);
+}
+
+.play-btn {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.play-btn:hover {
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.4);
+  transform: translateY(-2px);
+}
+
+.pause-btn {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+}
+
+.pause-btn:hover {
+  background: linear-gradient(135deg, #c2410c 0%, #b45309 100%);
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4);
+  transform: translateY(-2px);
+}
+
+.reset-btn {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+.reset-btn:hover {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
+  transform: translateY(-2px);
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-radius: 8px;
+  border: 2px solid #dc2626;
+}
+
+.pulse {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-color: #dc2626;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.playback-info {
+  padding: 16px;
+  background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%);
+  border-radius: 8px;
+  border-left: 4px solid #16a34a;
+}
+
+.playback-info p {
+  color: #15803d;
+  font-weight: 500;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+}
+
+.button-group button {
+  flex: 1;
+}
+
+.error-message {
+  background: #fee2e2;
+  border-left: 4px solid #dc2626;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .button-group {
+    flex-direction: column;
+  }
+
+  .start-btn,
+  .play-btn,
+  .pause-btn,
+  .stop-btn,
+  .reset-btn {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .audio-recorder {
+    padding: 16px;
+  }
+
+  .audio-recorder h3 {
+    font-size: 1.125rem;
+  }
+
+  .recording-controls,
+  .playback-controls {
+    gap: 10px;
+  }
+
+  .start-btn,
+  .play-btn,
+  .pause-btn,
+  .stop-btn,
+  .reset-btn {
+    padding: 10px 12px;
+    font-size: 0.875rem;
+    min-height: 40px;
+  }
+
+  .recording-indicator {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .playback-info {
+    padding: 12px;
+  }
+}
