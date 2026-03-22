@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import '../styles/AudioRecorder.css';
 
-function AudioRecorder({ onRecordingComplete }) {
+function AudioRecorder({ onRecordingComplete, playbackUrl }) {
   const [recording, setRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState(null);
   const [playingBack, setPlayingBack] = useState(false);
@@ -27,16 +27,8 @@ function AudioRecorder({ onRecordingComplete }) {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        const reader = new FileReader();
-
-        reader.onloadend = () => {
-          const base64data = reader.result;
-          setRecordedAudio(base64data);
-          onRecordingComplete(base64data);
-        };
-
-        reader.readAsDataURL(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
+        setRecordedAudio(audioBlob);
+        onRecordingComplete(audioBlob);
       };
 
       mediaRecorder.start();
@@ -55,7 +47,7 @@ function AudioRecorder({ onRecordingComplete }) {
   };
 
   const playRecording = () => {
-    if (recordedAudio && audioPlayRef.current) {
+    if (audioPlayRef.current) {
       audioPlayRef.current.play();
       setPlayingBack(true);
     }
@@ -76,13 +68,16 @@ function AudioRecorder({ onRecordingComplete }) {
     onRecordingComplete(null);
   };
 
+  // Determine which source to use for playback
+  const audioSource = playbackUrl || (recordedAudio ? URL.createObjectURL(recordedAudio) : null);
+
   return (
     <div className="audio-recorder">
       <h3>🎤 Record Your Voice</h3>
 
       {error && <div className="error-message">{error}</div>}
 
-      {!recordedAudio ? (
+      {!recordedAudio && !playbackUrl ? (
         <div className="recording-controls">
           {!recording ? (
             <button className="start-btn" onClick={startRecording}>
@@ -113,14 +108,19 @@ function AudioRecorder({ onRecordingComplete }) {
                 ⏸ Stop Playback
               </button>
             )}
-            <button className="reset-btn" onClick={resetRecording}>
-              🔄 Re-record
-            </button>
+            {!playbackUrl && (
+              <button className="reset-btn" onClick={resetRecording}>
+                🔄 Re-record
+              </button>
+            )}
           </div>
-          <audio
-            ref={audioPlayRef}
-            onEnded={() => setPlayingBack(false)}
-          />
+          {audioSource && (
+            <audio
+              ref={audioPlayRef}
+              src={audioSource}
+              onEnded={() => setPlayingBack(false)}
+            />
+          )}
         </div>
       )}
     </div>

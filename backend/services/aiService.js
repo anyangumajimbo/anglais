@@ -48,11 +48,11 @@ class AIService {
 
       console.log('Calling OpenAI Whisper API with language:', languageCode);
 
-      // Call OpenAI Whisper API
+      // Call OpenAI Whisper API with explicit language parameter
       const transcription = await this.openai.createTranscription(
         fs.createReadStream(tempFilePath),
         'whisper-1',
-        undefined,
+        languageCode, // Pass language code ('en' for English) explicitly to Whisper
         'json'
       );
 
@@ -138,130 +138,90 @@ class AIService {
     }
   }
 
-  // Calculate realistic metrics
+  // Calculate realistic metrics - Simplified clean approach
   static calculateDetailedMetrics(originalScript, userTranscript, duration) {
-    // Helper: Levenshtein distance for similarity
-    const levenshteinDistance = (str1, str2) => {
-      const matrix = [];
-      for (let i = 0; i <= str2.length; i++) {
-        matrix[i] = [i];
-      }
-      for (let j = 0; j <= str1.length; j++) {
-        matrix[0][j] = j;
-      }
-      for (let i = 1; i <= str2.length; i++) {
-        for (let j = 1; j <= str1.length; j++) {
-          if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-            matrix[i][j] = matrix[i - 1][j - 1];
-          } else {
-            matrix[i][j] = Math.min(
-              matrix[i - 1][j - 1] + 1,
-              matrix[i][j - 1] + 1,
-              matrix[i - 1][j] + 1
-            );
-          }
-        }
-      }
-      return matrix[str2.length][str1.length];
+    // Helper function to strip punctuation from words
+    const stripPunctuation = (word) => {
+      return word.replace(/[^\w]/g, '').toLowerCase();
     };
 
-    // Normalize texts (lowercase, minimal punctuation removal)
-    const normalized1 = originalScript.toLowerCase();
-    const normalized2 = userTranscript.toLowerCase();
+    // Parse words from original script (punctuation independent)
+    const originalWords = originalScript.toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 0)
+      .map(word => stripPunctuation(word))
+      .filter(word => word.length > 0);
 
-    // 1. Character-level accuracy (Levenshtein similarity)
-    const maxLen = Math.max(normalized1.length, normalized2.length);
-    const charDist = levenshteinDistance(normalized1, normalized2);
-    const characterAccuracy = Math.max(0, 100 - (charDist / maxLen) * 100);
+    // Parse words from user transcript (punctuation independent)
+    const userWords = userTranscript.toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 0)
+      .map(word => stripPunctuation(word))
+      .filter(word => word.length > 0);
 
-    // 2. Word-level accuracy
-    const words1 = normalized1.split(/\s+/).filter(w => w.length > 0);
-    const words2 = normalized2.split(/\s+/).filter(w => w.length > 0);
-    
-    let matchedWords = 0;
-    for (const w2 of words2) {
-      if (words1.includes(w2)) {
-        matchedWords++;
-      }
-    }
-    const wordAccuracy = words1.length > 0 ? (matchedWords / words1.length) * 100 : 0;
+    // 1. Calculate accuracy (word match percentage) - punctuation independent
+    const matchedWords = userWords.filter(word => originalWords.includes(word)).length;
+    const accuracy = originalWords.length > 0 
+      ? Math.min(100, (matchedWords / originalWords.length) * 100)
+      : 0;
 
-    // 3. Completeness (did they read all the words?)
-    const completeness = Math.min(100, (words2.length / words1.length) * 100);
+    // 2. Calculate words per minute
+    const wordsPerMinute = duration > 0 
+      ? Math.round((userWords.length / duration) * 60)
+      : 0;
 
-    // 4. Words per minute (fluency indicator)
-    const wordsPerMinute = duration > 0 ? Math.round((words2.length / duration) * 60) : 0;
-    
-    // Expected WPM: normal speech = 120-150 WPM
-    const fluencyScore = Math.max(0, Math.min(100, 100 - Math.abs(wordsPerMinute - 130) / 1.3));
+    // 3. Calculate fluency score (based on accuracy and speech rate)
+    // 70% weight on accuracy (reading correctly), 30% weight on speed
+    const fluency = Math.min(100, (accuracy * 0.7) + (Math.min(100, wordsPerMinute) * 0.3));
 
-    // 5. Calculate combined scores
-    const pronunciationScore = Math.round((characterAccuracy * 0.7) + (wordAccuracy * 0.3));
-    const accuracyScore = Math.round((wordAccuracy * 0.6) + (completeness * 0.4));
-    const overallScore = Math.round((pronunciationScore * 0.4) + (accuracyScore * 0.3) + (fluencyScore * 0.3));
+    // 4. Overall score (weighted average)
+    // 60% accuracy (most important), 40% fluency (speaking pace)
+    const overallScore = Math.round((accuracy * 0.6) + (fluency * 0.4));
 
-    // 6. Generate realistic comments
-    const comments = this.generateRealisticComments(
-      pronunciationScore,
-      accuracyScore,
-      fluencyScore,
-      wordsPerMinute,
-      completeness
-    );
+    // 5. Generate feedback comments
+    const comments = this.generateFeedbackComments(accuracy, fluency, wordsPerMinute);
 
     return {
       overallScore: Math.max(0, Math.min(100, overallScore)),
-      pronunciationScore: Math.max(0, Math.min(100, pronunciationScore)),
-      accuracyScore: Math.max(0, Math.min(100, accuracyScore)),
-      fluencyScore: Math.max(0, Math.min(100, fluencyScore)),
+      pronunciationScore: Math.max(0, Math.min(100, Math.round(accuracy))), // For UI compatibility
+      accuracyScore: Math.max(0, Math.min(100, Math.round(accuracy))),
+      fluencyScore: Math.max(0, Math.min(100, Math.round(fluency))),
       wordsPerMinute,
       comments
     };
   }
 
-  // Generate realistic feedback comments
-  static generateRealisticComments(pronunciation, accuracy, fluency, wpm, completeness) {
+  // Generate feedback comments (clean and concise)
+  static generateFeedbackComments(accuracy, fluency, wordsPerMinute) {
     const comments = [];
 
-    // Pronunciation feedback
-    if (pronunciation >= 85) {
-      comments.push('Excellent pronunciation!');
-    } else if (pronunciation >= 70) {
-      comments.push('Good pronunciation overall.');
-    } else if (pronunciation >= 50) {
-      comments.push('Work on pronunciation clarity.');
-    } else {
-      comments.push('Focus on accurate pronunciation.');
-    }
-
-    // Accuracy feedback
-    if (accuracy >= 85) {
-      comments.push('Very accurate word reading!');
+    // Accuracy-based feedback
+    if (accuracy >= 90) {
+      comments.push("Excellent word accuracy!");
     } else if (accuracy >= 70) {
-      comments.push('Good accuracy, some missed words.');
+      comments.push("Good accuracy, keep practicing.");
     } else if (accuracy >= 50) {
-      comments.push('Several words need work.');
+      comments.push("Focus on word pronunciation.");
     } else {
-      comments.push('Review the text carefully.');
+      comments.push("Review the script carefully.");
     }
 
-    // Fluency & pacing feedback
-    if (wpm >= 140) {
-      comments.push('Slow down slightly for clarity.');
-    } else if (wpm >= 110) {
-      comments.push('Good natural pacing!');
-    } else if (wpm >= 80) {
-      comments.push('Try speaking a bit faster.');
+    // Fluency-based feedback
+    if (fluency >= 85) {
+      comments.push("Great speaking pace!");
+    } else if (fluency >= 60) {
+      comments.push("Work on speaking speed.");
     } else {
-      comments.push('Speak more fluently.');
+      comments.push("Practice reading aloud more.");
     }
 
-    // Ensure we have exactly 3 comments
-    while (comments.length < 3) {
-      comments.push('Keep practicing!');
+    // Word count feedback
+    const feedbackComments = comments.slice(0, 2);
+    if (feedbackComments.length < 2) {
+      feedbackComments.push("Keep up the good work!");
     }
 
-    return comments.slice(0, 3);
+    return feedbackComments;
   }
 }
 

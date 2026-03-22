@@ -13,3 +13,22 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 .DS_Store
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.eslintcache
+
+# Production env
+.env.production

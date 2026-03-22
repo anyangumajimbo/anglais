@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getSessionToday, submitRecording } from '../services/api';
+import { getSessionToday, uploadRecording } from '../services/api';
 import AudioRecorder from '../components/AudioRecorder';
 import '../styles/UserSession.css';
 
@@ -14,6 +14,7 @@ function UserSession() {
   const [feedback, setFeedback] = useState(null);
   const [transcription, setTranscription] = useState(null);
   const [message, setMessage] = useState(null);
+  const [playbackUrl, setPlaybackUrl] = useState(null);
   const [fontSize, setFontSize] = useState(18); // Default font size in pixels
   const audioRef = useRef(null);
 
@@ -38,8 +39,8 @@ function UserSession() {
     }
   };
 
-  const handleRecordingComplete = (audioData) => {
-    setRecording(audioData);
+  const handleRecordingComplete = (audioBlob) => {
+    setRecording(audioBlob);
   };
 
   const handleSubmit = async () => {
@@ -57,22 +58,32 @@ function UserSession() {
       setSubmitting(true);
       setError(null);
 
-      const data = {
-        audioData: recording,
-        wantsFeedback,
-        hasConsent,
-        sessionId: session?._id,
-        sessionDate: session?.date,
-        expectedText: session?.scriptText
-      };
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('audio', recording, 'recording.wav');
+      formData.append('wantsFeedback', wantsFeedback);
+      formData.append('hasConsent', hasConsent);
+      formData.append('sessionId', session?._id);
+      formData.append('sessionDate', session?.date);
+      formData.append('expectedText', session?.scriptText);
 
-      const response = await submitRecording(data);
+      const response = await uploadRecording(recording, formData);
 
       if (response.data.success) {
         setFeedback(response.data.feedback);
         setTranscription(response.data.transcription);
         setMessage(response.data.message);
+        // Set the playback URL so user can hear their uploaded recording
+        if (response.data.audioUrl) {
+          const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+          setPlaybackUrl(`${baseUrl}${response.data.audioUrl}`);
+        }
         setRecording(null);
+      } else if (response.data.audioUrl) {
+        // Even if AI processing failed, show the audio URL for playback
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        setPlaybackUrl(`${baseUrl}${response.data.audioUrl}`);
+        setError(response.data.message || 'Feedback could not be generated, but your recording was saved.');
       }
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Error submitting recording. Please try again.';
@@ -173,9 +184,9 @@ function UserSession() {
             </div>
           </div>
 
-          <AudioRecorder onRecordingComplete={handleRecordingComplete} />
+          <AudioRecorder onRecordingComplete={handleRecordingComplete} playbackUrl={playbackUrl} />
 
-          {recording && (
+          {recording && !playbackUrl && (
             <div className="recorded-message">
               ✓ Recording captured. Ready to submit!
             </div>

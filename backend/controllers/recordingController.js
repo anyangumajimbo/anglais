@@ -4,7 +4,130 @@ const AIService = require('../services/aiService');
 const fs = require('fs');
 const path = require('path');
 
-// Submit recording
+// Upload recording - saves file first, then processes with AI if needed
+exports.uploadRecording = async (req, res) => {
+  try {
+    const { wantsFeedback, hasConsent, sessionId, sessionDate, expectedText } = req.body;
+
+    // Track recording submission
+    await Analytics.create({
+      eventType: 'recording_submit',
+      sessionDate: sessionDate ? new Date(sessionDate) : null
+    });
+
+    // Track attempt
+    await Analytics.create({
+      eventType: 'attempt',
+      sessionDate: sessionDate ? new Date(sessionDate) : null
+    });
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please record your voice before submitting.'
+      });
+    }
+
+    if (wantsFeedback && !hasConsent) {
+      return res.status(400).json({
+        success: false,
+        message: 'You must give consent to receive AI feedback.'
+      });
+    }
+
+    // File is now saved by multer
+    const audioFilePath = req.file.path;
+    const audioFileUrl = `/uploads/${req.file.filename}`;
+
+    console.log('Audio file saved:', audioFilePath);
+    console.log('Audio file URL:', audioFileUrl);
+
+    if (!wantsFeedback) {
+      return res.json({
+        success: true,
+        message: 'Thank you for taking part in today\'s session. Please check tomorrow for tomorrow\'s session.',
+        feedback: null,
+        audioUrl: audioFileUrl
+      });
+    }
+
+    // Process with AI feedback
+    try {
+      // Track AI request
+      await Analytics.create({
+        eventType: 'ai_requested',
+        sessionDate: sessionDate ? new Date(sessionDate) : null
+      });
+
+      console.log('Processing recording with AI feedback...');
+
+      // Read audio file from disk
+      const audioBuffer = fs.readFileSync(audioFilePath);
+      console.log('Audio buffer size:', audioBuffer.length, 'bytes');
+
+      // Transcribe with Whisper API
+      console.log('Calling AIService.transcribeAudio()...');
+      const transcriptionResult = await AIService.transcribeAudio(audioBuffer, 'english');
+      const userText = transcriptionResult.transcript;
+
+      console.log('Transcription received:', userText);
+
+      // Generate feedback
+      console.log('Generating feedback...');
+      const feedback = await AIService.generateFeedback(
+        expectedText || 'No text provided',
+        userText,
+        10 // Default duration in seconds
+      );
+
+      // Track AI completion
+      await Analytics.create({
+        eventType: 'ai_completed',
+        sessionDate: sessionDate ? new Date(sessionDate) : null
+      });
+
+      console.log('Feedback generated successfully');
+
+      return res.json({
+        success: true,
+        message: 'Feedback generated successfully',
+        feedback,
+        transcription: userText,
+        audioUrl: audioFileUrl
+      });
+    } catch (aiError) {
+      console.error('AI processing error:', aiError);
+
+      // Still return the audio URL even if AI processing fails
+      const errorMessage = aiError instanceof Error ? aiError.message : 'AI feedback is currently unavailable. Please try again later.';
+
+      return res.status(500).json({
+        success: false,
+        message: errorMessage,
+        error: aiError instanceof Error ? aiError.message : String(aiError),
+        audioUrl: audioFileUrl // Return URL so user can still hear their recording
+      });
+    }
+  } catch (error) {
+    console.error('Error uploading recording:', error);
+    
+    if (error instanceof mongoose.ValidationError || error instanceof mongoose.CastError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid input: ' + (error instanceof Error ? error.message : String(error)),
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Error uploading recording',
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+};
+
+// Submit recording - legacy endpoint for backward compatibility
 exports.submitRecording = async (req, res) => {
   try {
     const { audioData, wantsFeedback, hasConsent, sessionId, sessionDate, expectedText } = req.body;
@@ -65,7 +188,7 @@ exports.submitRecording = async (req, res) => {
 
       console.log('Transcription received:', userText);
 
-      // Generate feedback (without calling GPT)
+      // Generate feedback
       console.log('Generating feedback...');
       const feedback = await AIService.generateFeedback(
         expectedText || 'No text provided',

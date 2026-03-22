@@ -59,10 +59,12 @@ pids/
 # Optional eslint cache
 .eslintcache
 
-# Audio temp files
+# Audio temp files & uploads
 *.wav
 *.mp3
 temp-audio-*
+backend/uploads/
+frontend/build/
 
 # Database
 mongodb-data/

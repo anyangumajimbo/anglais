@@ -22,7 +22,25 @@ api.interceptors.request.use((config) => {
 export const getSessionToday = () => api.get('/session/today');
 export const getSessionByDate = (date) => api.get(`/session/${date}`);
 
-// Recording APIs
+// Recording APIs - Upload audio file (multipart/form-data)
+export const uploadRecording = (audioBlob, formData) => {
+  const uploadApi = axios.create({
+    baseURL: API_BASE_URL
+  });
+
+  const token = localStorage.getItem('adminToken');
+  if (token) {
+    uploadApi.defaults.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return uploadApi.post('/recording/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+};
+
+// Legacy endpoint for backward compatibility
 export const submitRecording = (data) => api.post('/recording/submit', data);
 
 // Analytics APIs
